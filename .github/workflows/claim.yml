@@ -1,1 +1,49 @@
 
+name: Claim
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    env:
+      PY_COLORS: "1"
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 20
+      fail-fast: false
+      matrix:
+        rangeIndex: [0 5 1, 0 5 2, 0 5 3, 0 5 4, 0 5 5, 5 10 6, 5 10 7, 5 10 8, 5 10 9, 5 10 10, 10 15 11, 10 15 12, 10 15 13, 10 15 14, 10 15 15, 15 20 16, 15 20 17, 15 20 18, 15 20 19, 15 20 20]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: Setup Code
+      run: |
+        node index.js
+        npm i
+        node asis.js ${{secrets.WK_U}} ${{secrets.WK_I}} ${{secrets.WK_S}} ${{secrets.BK_U}}
+        ls -la
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+    - name: Install
+      run: |
+        cd wkwk
+        python -m pip install --upgrade pip wheel setuptools
+        pip install -r requirements.txt
+        sudo apt install -y ffmpeg
+        sudo apt install -y google-chrome-stable
+        seleniumbase install chromedriver
+        sudo apt install -y xvfb
+        export DISPLAY=:0
+        /usr/bin/Xvfb :0 -screen 0 1024x768x24 &
+        sleep 5
+        xvfb-run python run.py ${{ matrix.rangeIndex }}
+    - name: done
+      run: exit
